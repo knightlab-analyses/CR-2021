@@ -1,0 +1,41 @@
+from posixpath import join as pj
+
+SAMPLES, = glob_wildcards(config.get("indir", "data_input")+"/{sample}.fasta")
+DBS = ["Rfam_11_0.repr", "gold"]
+IDS = ["0.90", "0.95", "0.97", "0.99"]
+
+rule all:
+    input:
+        vsearch = expand(pj(config.get("outdir", "data_output"), "vsearch/{db}_{sample}_{id}.uc"),
+        db = DBS, sample = SAMPLES, id = IDS)
+
+# rule template:
+#     input:
+#     output:
+#     log: pj("data_logs/", "{sample}.log")
+#     threads:
+#     params:
+#     conda: "envs/asdf.yml"
+#     shell:
+#         """
+#         asdf
+#         """
+
+rule vsearch:
+    input:
+        fasta = config.get("indir", "data_input")+"/{sample}.fasta",
+        db = config.get("dbs", "data_dbs")+"/{db}.fasta"
+    output: pj(config.get("outdir", "data_output"), "vsearch/{db}_{sample}_{id}.uc")
+    log: pj("data_logs/", "vsearch/{db}_{sample}_{id}.log")
+    threads: 8
+    params: "asdf"
+    conda: "envs/vsearch.yml"
+    shell: """
+    vsearch \
+        --usearch_global {input.fasta} \
+        -db {input.db} \
+        --id {wildcards.id} \
+        --threads {threads} \
+        --uc {output} \
+        --log {log}
+    """
