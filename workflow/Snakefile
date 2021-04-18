@@ -8,6 +8,8 @@ rule all:
     input:
         vsearch = expand(pj(config.get("outdir", "data_output"), "vsearch/{db}_{sample}_{id}.uc"),
             db = DBS, sample = SAMPLES, id = IDS),
+        sortmerna = expand(pj(config.get("outdir", "data_output"), "sortmerna/{db}_{sample}_{id}_otu_map.txt"),
+            db = DBS, sample = SAMPLES, id = IDS)
 
 # rule template:
 #     input:
@@ -38,4 +40,29 @@ rule vsearch:
         --threads {threads} \
         --uc {output} \
         --log {log}
+    """
+
+rule sortmerna:
+    input:
+        fasta = config.get("indir", "data_input")+"/{sample}.fasta",
+        db = config.get("dbs", "data_dbs")+"/{db}.fasta"
+    output: pj(config.get("outdir", "data_output"), "sortmerna/{db}_{sample}_{id}_otu_map.txt")
+    log: pj("data_logs/", "sortmerna/{db}_{sample}_{id}_aligned.log")
+    threads: 8
+    params:
+        workdir = pj(config.get("outdir", "data_output"), "sortmerna")
+    conda: "envs/sortmerna.yml"
+    shell: """
+    rm -rf {params.workdir}/kvdb;
+
+    sortmerna \
+        --ref {input.db} \
+        --reads {input.fasta} \
+        --id {wildcards.id} \
+        --threads {threads} \
+        --otu_map --sam \
+        --workdir {params.workdir};
+    
+    #cp {params.workdir}/out/otu_map.txt {output};
+    #cp {params.workdir}/out/aligned.log {log}
     """
