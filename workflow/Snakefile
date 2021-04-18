@@ -7,7 +7,7 @@ IDS = ["0.90", "0.95", "0.97", "0.99"]
 rule all:
     input:
         vsearch = expand(pj(config.get("outdir", "data_output"), "vsearch/{db}_{sample}_{id}.uc"),
-        db = DBS, sample = SAMPLES, id = IDS)
+            db = DBS, sample = SAMPLES, id = IDS),
 
 # rule template:
 #     input:
@@ -33,7 +33,7 @@ rule vsearch:
     shell: """
     vsearch \
         --usearch_global {input.fasta} \
-        -db {input.db} \
+        --db {input.db} \
         --id {wildcards.id} \
         --threads {threads} \
         --uc {output} \
